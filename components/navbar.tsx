@@ -8,6 +8,7 @@ import { useState } from 'react';
 
 const navigation = [
   { name: 'Главная', href: '/' },
+  { name: 'Калькулятор', href: '/calculator' },
   { name: 'Добавить объявление', href: '/add' },
 ];
 
