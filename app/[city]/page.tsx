@@ -269,35 +269,24 @@ export default function CityPage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="overflow-hidden border-0 shadow">
-                    <div className="aspect-[4/3] bg-slate-200 animate-pulse" />
-                    <CardContent className="p-4 space-y-3">
-                      <div className="h-5 bg-slate-200 rounded animate-pulse" />
-                      <div className="h-4 bg-slate-200 rounded w-2/3 animate-pulse" />
-                      <div className="h-4 bg-slate-200 rounded w-1/2 animate-pulse" />
-                    </CardContent>
-                  </Card>
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-[140px] bg-white rounded-xl animate-pulse border border-border" />
                 ))}
               </div>
             ) : listings.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-xl">
+              <div className="text-center py-16 bg-white rounded-xl border border-border">
                 <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
                   <SlidersHorizontal className="h-8 w-8 text-slate-400" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Объявления не найдены</h3>
-                <p className="text-muted-foreground mb-6">
-                  Попробуйте изменить параметры фильтрации
-                </p>
-                <Button variant="outline" onClick={resetFilters}>
-                  Сбросить фильтры
-                </Button>
+                <p className="text-muted-foreground mb-6">Попробуйте изменить параметры фильтрации</p>
+                <Button variant="outline" onClick={resetFilters}>Сбросить фильтры</Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
                 {listings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
+                  <ListingCard key={listing.id} listing={listing} horizontal />
                 ))}
               </div>
             )}

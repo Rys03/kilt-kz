@@ -3,31 +3,36 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase, Listing, CITIES } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Search,
-  Shield,
-  Clock,
-  Building,
-  Home,
-  Key,
-  MapPin,
-} from 'lucide-react';
+import { Search } from 'lucide-react';
 import ListingCard from '@/components/listing-card';
+
+const CATEGORIES = [
+  { icon: '🏢', label: 'Квартиры', count: '287 450', href: '/almaty?type=sale' },
+  { icon: '🏡', label: 'Дома и дачи', count: '64 120', href: '/almaty?type=sale' },
+  { icon: '🌿', label: 'Участки', count: '48 780', href: '/almaty' },
+  { icon: '🪟', label: 'Коммерческая', count: '52 340', href: '/almaty' },
+  { icon: '🏗️', label: 'Новостройки', count: '3 184 ЖК', href: '/almaty' },
+  { icon: '🔑', label: 'Аренда долгосрочная', count: '38 900', href: '/almaty?type=rent' },
+  { icon: '🌙', label: 'Аренда посуточно', count: '12 600', href: '/almaty?type=rent' },
+  { icon: '🚗', label: 'Гаражи', count: '9 250', href: '/almaty' },
+];
+
+const CITY_STATS = [
+  { name: 'Алматы', count: '142 500' },
+  { name: 'Астана', count: '98 340' },
+  { name: 'Шымкент', count: '41 280' },
+  { name: 'Актобе', count: '22 100' },
+  { name: 'Атырау', count: '19 650' },
+  { name: 'Актау', count: '15 430' },
+  { name: 'Павлодар', count: '14 890' },
+];
 
 export default function HomePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchCity, setSearchCity] = useState('');
-  const [searchType, setSearchType] = useState('');
+  const [searchType, setSearchType] = useState('sale');
+  const [activeTab, setActiveTab] = useState('sale');
 
   useEffect(() => {
     fetchListings();
@@ -39,12 +44,11 @@ export default function HomePage() {
         .from('listings')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(20);
-
+        .limit(5);
       if (error) throw error;
       setListings(data || []);
     } catch (error) {
-      console.error('Error fetching listings:', error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -52,249 +56,182 @@ export default function HomePage() {
 
   const handleSearch = () => {
     if (searchCity) {
-      window.location.href = `/${searchCity.toLowerCase()}${searchType ? `?type=${searchType}` : ''}`;
+      window.location.href = `/${searchCity.toLowerCase()}?type=${activeTab}`;
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
-      <section className="relative hero-gradient text-white">
-        <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1920')] bg-cover bg-center opacity-20" />
-        <div className="container mx-auto px-4 py-20 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Найдите идеальное жилье в Казахстане
-            </h1>
-            <p className="text-lg md:text-xl mb-10 text-white/90">
-              Тысячи объявлений о продаже и аренде недвижимости в одном месте
-            </p>
+    <div className="min-h-screen bg-[#F5F6F8]">
+      {/* Hero */}
+      <div className="hero-gradient py-12 px-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="max-w-[800px] mx-auto text-center relative">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2">Найдите недвижимость в Казахстане</h1>
+          <p className="text-white/75 text-base mb-7">Более 500 000 актуальных объявлений по всей стране</p>
 
-            {/* Search Box */}
-            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-2xl max-w-3xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
-                    Город
-                  </label>
-                  <Select value={searchCity} onValueChange={setSearchCity}>
-                    <SelectTrigger className="w-full text-gray-900">
-                      <SelectValue placeholder="Выберите город" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CITIES.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
-                    Тип сделки
-                  </label>
-                  <Select value={searchType} onValueChange={setSearchType}>
-                    <SelectTrigger className="w-full text-gray-900">
-                      <SelectValue placeholder="Любой" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sale">Продажа</SelectItem>
-                      <SelectItem value="rent">Аренда</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-end">
-                  <Button
-                    onClick={handleSearch}
-                    className="w-full h-10 text-base font-semibold"
-                    disabled={!searchCity}
-                  >
-                    <Search className="h-4 w-4 mr-2" />
-                    Найти
-                  </Button>
-                </div>
+          <div className="bg-white rounded-xl p-5 shadow-2xl text-left">
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {['sale', 'rent', 'daily', 'new'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => { setActiveTab(tab); setSearchType(tab); }}
+                  className={`px-4 py-1.5 rounded-full border text-sm font-medium transition ${activeTab === tab ? 'bg-primary border-primary text-white' : 'border-border hover:border-primary hover:text-primary'}`}
+                >
+                  {tab === 'sale' ? 'Продажа' : tab === 'rent' ? 'Аренда' : tab === 'daily' ? 'Посуточно' : 'Новостройки'}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_120px_120px_auto] gap-3 items-end">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Город</label>
+                <select value={searchCity} onChange={(e) => setSearchCity(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary">
+                  <option value="">Выберите город</option>
+                  {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Тип недвижимости</label>
+                <select className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary">
+                  <option>Квартиры</option>
+                  <option>Дома и дачи</option>
+                  <option>Участки</option>
+                  <option>Коммерческая</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Цена от, ₸</label>
+                <input type="text" placeholder="0" className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">Цена до, ₸</label>
+                <input type="text" placeholder="∞" className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary" />
+              </div>
+              <button onClick={handleSearch} className="h-[38px] px-6 bg-primary hover:bg-red-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition whitespace-nowrap">
+                <Search className="h-4 w-4" /> Найти
+              </button>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Wave decoration */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 100" fill="white" preserveAspectRatio="none" className="w-full h-16">
-            <path d="M0,0 C480,100 960,100 1440,0 L1440,100 L0,100 Z" />
-          </svg>
+      {/* Categories */}
+      <div className="max-w-[1200px] mx-auto px-4 mt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+          {CATEGORIES.map((cat) => (
+            <Link key={cat.label} href={cat.href}
+              className="bg-white border border-border rounded-xl p-3 text-center hover:border-primary hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <span className="text-2xl block mb-1">{cat.icon}</span>
+              <div className="text-xs font-semibold text-foreground">{cat.label}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">{cat.count}</div>
+            </Link>
+          ))}
         </div>
-      </section>
+      </div>
 
-      {/* Stats Section */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">20+</div>
-              <div className="text-muted-foreground">Объявлений</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">10</div>
-              <div className="text-muted-foreground">Городов</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">500+</div>
-              <div className="text-muted-foreground">Пользователей</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">24/7</div>
-              <div className="text-muted-foreground">Поддержка</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Cities Section */}
-      <section className="py-16 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Популярные города</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Выберите город, чтобы просмотреть актуальные объявления о недвижимости
-            </p>
+      {/* Main content */}
+      <div className="max-w-[1200px] mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        {/* Listings */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-base font-bold text-foreground">Свежие объявления — Алматы</span>
+            <Link href="/almaty" className="text-sm text-primary hover:underline font-medium">Все объявления →</Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {CITIES.map((city) => (
-              <Link key={city} href={`/${city.toLowerCase()}`}>
-                <Card className="group cursor-pointer hover:shadow-lg transition-shadow overflow-hidden border-0 shadow">
-                  <div className="relative h-40 bg-gradient-to-br from-primary/20 to-primary/10">
-                    <Building className="absolute bottom-3 right-3 h-12 w-12 text-primary/30 group-hover:text-primary/50 transition-colors" />
-                    <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors" />
-                  </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <h3 className="font-semibold group-hover:text-primary transition-colors">
-                        {city}
-                      </h3>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+          {/* Filter chips */}
+          <div className="bg-white border border-border rounded-xl px-4 py-2.5 mb-4 flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-muted-foreground">Комнат:</span>
+            {['Все', '1', '2', '3', '4+'].map((r) => (
+              <button key={r} className="px-3 py-1 rounded-full border border-border text-xs hover:border-primary hover:text-primary first-of-type:bg-primary first-of-type:text-white first-of-type:border-primary transition">
+                {r}
+              </button>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Latest Listings */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-10">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground mb-2">
-                Последние объявления
-              </h2>
-              <p className="text-muted-foreground">
-                Актуальные предложения недвижимости
-              </p>
-            </div>
-            <Button variant="outline" asChild className="hidden md:flex">
-              <Link href="/almaty">Смотреть все</Link>
-            </Button>
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="overflow-hidden border-0 shadow">
-                  <div className="aspect-[4/3] bg-slate-200 animate-pulse" />
-                  <CardContent className="p-4 space-y-3">
-                    <div className="h-5 bg-slate-200 rounded animate-pulse" />
-                    <div className="h-4 bg-slate-200 rounded w-2/3 animate-pulse" />
-                    <div className="h-4 bg-slate-200 rounded w-1/2 animate-pulse" />
-                  </CardContent>
-                </Card>
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-[140px] bg-white rounded-xl animate-pulse border border-border" />
               ))}
             </div>
           ) : listings.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 bg-white rounded-xl border border-border">
               <p className="text-muted-foreground">Объявления не найдены</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {listings.slice(0, 6).map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+            <div>
+              {listings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} horizontal />
               ))}
             </div>
           )}
 
-          <div className="mt-8 text-center md:hidden">
-            <Button variant="outline" asChild>
-              <Link href="/almaty">Смотреть все</Link>
-            </Button>
+          <div className="flex justify-center gap-1.5 mt-5">
+            {[1,2,3,4,5].map((p) => (
+              <Link key={p} href="/almaty"
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm ${p === 1 ? 'bg-primary border-primary text-white font-bold' : 'border-border hover:border-primary hover:text-primary'}`}>
+                {p}
+              </Link>
+            ))}
           </div>
         </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Почему kilt.kz?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Мы делаем поиск недвижимости простым и удобным
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Проверенные объявления</h3>
-              <p className="text-muted-foreground text-sm">
-                Каждое объявление проходит модерацию перед публикацией
-              </p>
-            </div>
-
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Clock className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Актуальные цены</h3>
-              <p className="text-muted-foreground text-sm">
-                Ежедневное обновление предложений и цен на рынке
-              </p>
-            </div>
-
-            <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Key className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Полный сервис</h3>
-              <p className="text-muted-foreground text-sm">
-                Поможем с выбором, оформлением и консультациями
-              </p>
+        {/* Sidebar */}
+        <aside className="space-y-4">
+          {/* Stats */}
+          <div className="bg-white border border-border rounded-xl p-4">
+            <h3 className="text-sm font-bold mb-3">📊 Статистика портала</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {[['500К+','Объявлений'],['2.1М','Посетителей/мес'],['17','Городов KZ'],['98%','Актуальных']].map(([num, label]) => (
+                <div key={label} className="bg-[#F5F6F8] rounded-lg p-2.5 text-center">
+                  <div className="text-lg font-extrabold text-primary leading-none">{num}</div>
+                  <div className="text-[10px] text-muted-foreground mt-1 leading-tight">{label}</div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="py-16 hero-gradient text-white">
-        <div className="container mx-auto px-4 text-center">
-          <Home className="h-12 w-12 mx-auto mb-6 opacity-80" />
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Готовы разместить объявление?
-          </h2>
-          <p className="text-white/90 mb-8 max-w-xl mx-auto">
-            Продайте или сдайте свою недвижимость быстро и безопасно
-          </p>
-          <Button size="lg" variant="secondary" asChild className="font-semibold">
-            <Link href="/add">Разместить объявление</Link>
-          </Button>
-        </div>
-      </section>
+          {/* Cities */}
+          <div className="bg-white border border-border rounded-xl p-4">
+            <h3 className="text-sm font-bold mb-3">🏙️ Популярные города</h3>
+            <ul className="divide-y divide-border">
+              {CITY_STATS.map((c) => (
+                <li key={c.name}>
+                  <Link href={`/${c.name.toLowerCase()}`}
+                    className="flex items-center justify-between py-2 text-sm hover:text-primary transition group">
+                    <span className="font-medium group-hover:text-primary">{c.name}</span>
+                    <span className="text-xs text-muted-foreground bg-[#F5F6F8] px-2 py-0.5 rounded-full">{c.count}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link href="/almaty" className="text-xs text-primary hover:underline mt-2 block">Все города →</Link>
+          </div>
+
+          {/* Banner */}
+          <div className="bg-gradient-to-br from-primary to-red-400 rounded-xl p-5 text-center text-white">
+            <h3 className="text-sm font-bold mb-1">Подайте объявление</h3>
+            <p className="text-xs opacity-85 mb-4">Разместите бесплатно и найдите покупателя или арендатора быстро</p>
+            <Link href="/add" className="inline-block px-5 py-2 bg-white text-primary rounded-full text-sm font-bold hover:shadow-md transition">
+              Бесплатно разместить
+            </Link>
+          </div>
+
+          {/* Price trends */}
+          <div className="bg-white border border-border rounded-xl p-4">
+            <h3 className="text-sm font-bold mb-3">📈 Цены на квартиры в Алматы</h3>
+            <div className="space-y-2">
+              {[['1-комн.','27.5 млн ₸','up'],['2-комн.','48 млн ₸','up'],['3-комн.','85 млн ₸','up'],['4+ комн.','145 млн ₸','up']].map(([type, price, dir]) => (
+                <div key={type} className="flex justify-between items-center py-1.5 border-b border-border last:border-0 text-sm">
+                  <span className="text-muted-foreground">{type}</span>
+                  <span className="font-semibold text-primary">↑ {price}</span>
+                </div>
+              ))}
+            </div>
+            <Link href="/calculator" className="text-xs text-primary hover:underline mt-2 block">Подробная аналитика →</Link>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
