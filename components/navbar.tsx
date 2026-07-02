@@ -113,7 +113,7 @@ export default function Navbar() {
           <Link href="/almaty" className="px-4 py-2.5 text-sm font-semibold text-foreground hover:text-primary border-b-2 border-transparent hover:border-primary whitespace-nowrap transition">
             Новостройки
           </Link>
-          <Link href="/calculator" className="px-4 py-2.5 text-sm font-semibold text-foreground hover:text-primary border-b-2 border-transparent hover:border-primary whitespace-nowrap transition">
+          <Link href="/mortgage" className="px-4 py-2.5 text-sm font-semibold text-foreground hover:text-primary border-b-2 border-transparent hover:border-primary whitespace-nowrap transition">
             Ипотека
           </Link>
           <Link href="/calculator" className="px-4 py-2.5 text-sm font-semibold text-foreground hover:text-primary border-b-2 border-transparent hover:border-primary whitespace-nowrap transition">

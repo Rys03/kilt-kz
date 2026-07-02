@@ -7,24 +7,24 @@ import { Search } from 'lucide-react';
 import ListingCard from '@/components/listing-card';
 
 const CATEGORIES = [
-  { icon: '🏢', label: 'Квартиры', count: '287 450', href: '/almaty?type=sale' },
-  { icon: '🏡', label: 'Дома и дачи', count: '64 120', href: '/almaty?type=sale' },
-  { icon: '🌿', label: 'Участки', count: '48 780', href: '/almaty' },
-  { icon: '🪟', label: 'Коммерческая', count: '52 340', href: '/almaty' },
-  { icon: '🏗️', label: 'Новостройки', count: '3 184 ЖК', href: '/almaty' },
-  { icon: '🔑', label: 'Аренда долгосрочная', count: '38 900', href: '/almaty?type=rent' },
+  { icon: '🏢', label: 'Квартиры', count: '287 450', href: '/almaty?type=sale&property_type=apartment' },
+  { icon: '🏡', label: 'Дома и дачи', count: '64 120', href: '/almaty?type=sale&property_type=house' },
+  { icon: '🌿', label: 'Участки', count: '48 780', href: '/almaty?property_type=land' },
+  { icon: '🪟', label: 'Коммерческая', count: '52 340', href: '/almaty?property_type=commercial' },
+  { icon: '🏗️', label: 'Новостройки', count: '3 184 ЖК', href: '/almaty?type=sale&property_type=apartment' },
+  { icon: '🔑', label: 'Аренда долгосрочная', count: '38 900', href: '/almaty?type=rent&property_type=apartment' },
   { icon: '🌙', label: 'Аренда посуточно', count: '12 600', href: '/almaty?type=rent' },
-  { icon: '🚗', label: 'Гаражи', count: '9 250', href: '/almaty' },
+  { icon: '🚗', label: 'Гаражи', count: '9 250', href: '/almaty?property_type=garage' },
 ];
 
 const CITY_STATS = [
-  { name: 'Алматы', count: '142 500' },
-  { name: 'Астана', count: '98 340' },
-  { name: 'Шымкент', count: '41 280' },
-  { name: 'Актобе', count: '22 100' },
-  { name: 'Атырау', count: '19 650' },
-  { name: 'Актау', count: '15 430' },
-  { name: 'Павлодар', count: '14 890' },
+  { name: 'Алматы', slug: 'almaty', count: '142 500' },
+  { name: 'Астана', slug: 'astana', count: '98 340' },
+  { name: 'Шымкент', slug: 'shymkent', count: '41 280' },
+  { name: 'Актобе', slug: 'aktobe', count: '22 100' },
+  { name: 'Атырау', slug: 'atyrau', count: '19 650' },
+  { name: 'Актау', slug: 'aktau', count: '15 430' },
+  { name: 'Павлодар', slug: 'pavlodar', count: '14 890' },
 ];
 
 export default function HomePage() {
@@ -197,7 +197,7 @@ export default function HomePage() {
             <ul className="divide-y divide-border">
               {CITY_STATS.map((c) => (
                 <li key={c.name}>
-                  <Link href={`/${c.name.toLowerCase()}`}
+                  <Link href={`/${c.slug}`}
                     className="flex items-center justify-between py-2 text-sm hover:text-primary transition group">
                     <span className="font-medium group-hover:text-primary">{c.name}</span>
                     <span className="text-xs text-muted-foreground bg-[#F5F6F8] px-2 py-0.5 rounded-full">{c.count}</span>

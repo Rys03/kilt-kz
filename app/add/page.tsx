@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, CITIES } from '@/lib/supabase';
+import { supabase, CITIES, PROPERTY_TYPES } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,7 @@ export default function AddListingPage() {
     title: '',
     description: '',
     type: 'sale' as 'sale' | 'rent',
+    property_type: 'apartment',
     price: '',
     city: '',
     address: '',
@@ -60,6 +61,7 @@ export default function AddListingPage() {
         title: formData.title,
         description: formData.description,
         type: formData.type,
+        property_type: formData.property_type,
         price: parseInt(formData.price),
         city: formData.city,
         address: formData.address,
@@ -176,6 +178,27 @@ export default function AddListingPage() {
                     <SelectContent>
                       <SelectItem value="sale">Продажа</SelectItem>
                       <SelectItem value="rent">Аренда</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="mb-2 block">
+                    Тип недвижимости <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={formData.property_type}
+                    onValueChange={(val) =>
+                      setFormData((prev) => ({ ...prev, property_type: val }))
+                    }
+                  >
+                    <SelectTrigger className="text-base">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROPERTY_TYPES.map((pt) => (
+                        <SelectItem key={pt.value} value={pt.value}>{pt.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

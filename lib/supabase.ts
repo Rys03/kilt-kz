@@ -23,6 +23,7 @@ export type Listing = {
   has_elevator: boolean;
   images: string[];
   model_3d_url: string | null;
+  property_type: 'apartment' | 'house' | 'land' | 'commercial' | 'garage' | null;
   contact_name: string;
   contact_phone: string;
   created_at: string;
@@ -67,3 +68,24 @@ export const getCityFromSlug = (slug: string): string => {
   };
   return cityMap[slug] || slug;
 };
+
+export const CITY_SLUGS: Record<string, string> = {
+  'Алматы': 'almaty',
+  'Астана': 'astana',
+  'Шымкент': 'shymkent',
+  'Актобе': 'aktobe',
+  'Атырау': 'atyrau',
+  'Актау': 'aktau',
+  'Павлодар': 'pavlodar',
+  'Тараз': 'taraz',
+  'Костанай': 'kostanay',
+  'Уральск': 'uralsk',
+};
+
+export const PROPERTY_TYPES = [
+  { value: 'apartment', label: 'Квартира' },
+  { value: 'house', label: 'Дом / Дача' },
+  { value: 'land', label: 'Участок' },
+  { value: 'commercial', label: 'Коммерческая' },
+  { value: 'garage', label: 'Гараж' },
+] as const;

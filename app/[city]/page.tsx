@@ -1,38 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, Listing, CITIES, getCityFromSlug } from '@/lib/supabase';
+import { supabase, Listing, CITIES, getCityFromSlug, PROPERTY_TYPES } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
-  MapPin,
-  SlidersHorizontal,
-  X,
-} from 'lucide-react';
+import { X, SlidersHorizontal } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import ListingCard from '@/components/listing-card';
+
+const ROOM_OPTIONS = ['all', '1', '2', '3', '4', '5+'];
 
 export default function CityPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const citySlug = params.city as string;
   const city = getCityFromSlug(citySlug);
 
@@ -41,17 +25,14 @@ export default function CityPage() {
   const [totalCount, setTotalCount] = useState(0);
 
   const [type, setType] = useState<string>(searchParams.get('type') || 'all');
-  const [minPrice, setMinPrice] = useState<string>('');
-  const [maxPrice, setMaxPrice] = useState<string>('');
-  const [rooms, setRooms] = useState<string>('all');
+  const [propertyType, setPropertyType] = useState<string>(searchParams.get('property_type') || 'all');
+  const [rooms, setRooms] = useState<string>(searchParams.get('rooms') || 'all');
+  const [minPrice, setMinPrice] = useState<string>(searchParams.get('min_price') || '');
+  const [maxPrice, setMaxPrice] = useState<string>(searchParams.get('max_price') || '');
   const [hasParking, setHasParking] = useState(false);
   const [hasElevator, setHasElevator] = useState(false);
 
-  useEffect(() => {
-    fetchListings();
-  }, [city, type, minPrice, maxPrice, rooms, hasParking, hasElevator]);
-
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -60,32 +41,18 @@ export default function CityPage() {
         .eq('city', city)
         .eq('status', 'active');
 
-      if (type && type !== 'all') {
-        query = query.eq('type', type);
-      }
-
-      if (minPrice) {
-        query = query.gte('price', parseInt(minPrice));
-      }
-
-      if (maxPrice) {
-        query = query.lte('price', parseInt(maxPrice));
-      }
-
+      if (type && type !== 'all') query = query.eq('type', type);
+      if (propertyType && propertyType !== 'all') query = query.eq('property_type', propertyType);
+      if (minPrice) query = query.gte('price', parseInt(minPrice));
+      if (maxPrice) query = query.lte('price', parseInt(maxPrice));
       if (rooms && rooms !== 'all') {
-        query = query.eq('rooms', parseInt(rooms));
+        if (rooms === '5+') query = query.gte('rooms', 5);
+        else query = query.eq('rooms', parseInt(rooms));
       }
-
-      if (hasParking) {
-        query = query.eq('has_parking', true);
-      }
-
-      if (hasElevator) {
-        query = query.eq('has_elevator', true);
-      }
+      if (hasParking) query = query.eq('has_parking', true);
+      if (hasElevator) query = query.eq('has_elevator', true);
 
       const { data, error, count } = await query.order('created_at', { ascending: false });
-
       if (error) throw error;
       setListings(data || []);
       setTotalCount(count || 0);
@@ -94,111 +61,15 @@ export default function CityPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [city, type, propertyType, rooms, minPrice, maxPrice, hasParking, hasElevator]);
+
+  useEffect(() => { fetchListings(); }, [fetchListings]);
 
   const resetFilters = () => {
-    setType('all');
-    setMinPrice('');
-    setMaxPrice('');
-    setRooms('all');
-    setHasParking(false);
-    setHasElevator(false);
+    setType('all'); setPropertyType('all'); setRooms('all');
+    setMinPrice(''); setMaxPrice('');
+    setHasParking(false); setHasElevator(false);
   };
-
-  const FiltersContent = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-semibold text-lg mb-4">Фильтры</h2>
-        <p className="text-muted-foreground text-sm">
-          Найдено: {totalCount} объявлений
-        </p>
-      </div>
-
-      <Separator />
-
-      <div>
-        <Label className="text-sm font-medium mb-3 block">Тип сделки</Label>
-        <Select value={type} onValueChange={setType}>
-          <SelectTrigger>
-            <SelectValue placeholder="Все типы" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все типы</SelectItem>
-            <SelectItem value="sale">Продажа</SelectItem>
-            <SelectItem value="rent">Аренда</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label className="text-sm font-medium mb-3 block">Цена (₸)</Label>
-        <div className="flex gap-2">
-          <Input
-            type="number"
-            placeholder="От"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            className="w-full"
-          />
-          <Input
-            type="number"
-            placeholder="До"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-sm font-medium mb-3 block">Количество комнат</Label>
-        <Select value={rooms} onValueChange={setRooms}>
-          <SelectTrigger>
-            <SelectValue placeholder="Все" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Все</SelectItem>
-            <SelectItem value="1">1 комната</SelectItem>
-            <SelectItem value="2">2 комнаты</SelectItem>
-            <SelectItem value="3">3 комнаты</SelectItem>
-            <SelectItem value="4">4 комнаты</SelectItem>
-            <SelectItem value="5">5+ комнат</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label className="text-sm font-medium mb-3 block">Удобства</Label>
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="parking"
-              checked={hasParking}
-              onCheckedChange={(checked) => setHasParking(checked as boolean)}
-            />
-            <label htmlFor="parking" className="text-sm text-muted-foreground cursor-pointer">
-              Парковка
-            </label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="elevator"
-              checked={hasElevator}
-              onCheckedChange={(checked) => setHasElevator(checked as boolean)}
-            />
-            <label htmlFor="elevator" className="text-sm text-muted-foreground cursor-pointer">
-              Лифт
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <Button variant="outline" className="w-full" onClick={resetFilters}>
-        <X className="h-4 w-4 mr-2" />
-        Сбросить фильтры
-      </Button>
-    </div>
-  );
 
   const isCityValid = CITIES.includes(city as typeof CITIES[number]);
 
@@ -206,68 +77,150 @@ export default function CityPage() {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-2xl font-bold mb-4">Город не найден</h1>
-        <p className="text-muted-foreground mb-8">
-          К сожалению, город &quot;{citySlug}&quot; не найден в списке доступных городов.
-        </p>
-        <Button asChild>
-          <Link href="/">Вернуться на главную</Link>
-        </Button>
+        <Button asChild><Link href="/">На главную</Link></Button>
       </div>
     );
   }
 
-  return (
-    <div className="bg-slate-50 min-h-screen">
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
-            <Link href="/" className="hover:text-primary">Главная</Link>
-            <span>/</span>
-            <span className="text-foreground">{city}</span>
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Недвижимость в {city}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Актуальные объявления о продаже и аренде недвижимости
-          </p>
+  const FiltersContent = () => (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <h2 className="font-bold text-base">Фильтры</h2>
+        <button onClick={resetFilters} className="text-xs text-primary hover:underline flex items-center gap-1">
+          <X className="h-3 w-3" /> Сбросить
+        </button>
+      </div>
+
+      {/* Тип сделки */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">Тип сделки</p>
+        <div className="flex gap-2">
+          {[['all','Все'],['sale','Продажа'],['rent','Аренда']].map(([v,l]) => (
+            <button key={v} onClick={() => setType(v)}
+              className={`flex-1 py-1.5 rounded-lg border text-xs font-medium transition ${type === v ? 'bg-primary border-primary text-white' : 'border-border hover:border-primary hover:text-primary'}`}>
+              {l}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          <aside className="hidden lg:block w-80 shrink-0">
-            <Card className="sticky top-24 p-6">
+      {/* Тип недвижимости */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">Тип недвижимости</p>
+        <div className="space-y-1.5">
+          <button onClick={() => setPropertyType('all')}
+            className={`w-full text-left px-3 py-1.5 rounded-lg border text-sm transition ${propertyType === 'all' ? 'bg-primary/10 border-primary text-primary font-medium' : 'border-border hover:border-primary'}`}>
+            Все типы
+          </button>
+          {PROPERTY_TYPES.map((pt) => (
+            <button key={pt.value} onClick={() => setPropertyType(pt.value)}
+              className={`w-full text-left px-3 py-1.5 rounded-lg border text-sm transition ${propertyType === pt.value ? 'bg-primary/10 border-primary text-primary font-medium' : 'border-border hover:border-primary'}`}>
+              {pt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Комнаты */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">Количество комнат</p>
+        <div className="flex gap-1.5 flex-wrap">
+          {ROOM_OPTIONS.map((r) => (
+            <button key={r} onClick={() => setRooms(r)}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${rooms === r ? 'bg-primary border-primary text-white' : 'border-border hover:border-primary hover:text-primary'}`}>
+              {r === 'all' ? 'Все' : r}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Цена */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">Цена (₸)</p>
+        <div className="flex gap-2">
+          <Input type="number" placeholder="От" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} className="text-sm" />
+          <Input type="number" placeholder="До" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className="text-sm" />
+        </div>
+      </div>
+
+      {/* Удобства */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">Удобства</p>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={hasParking} onCheckedChange={(v) => setHasParking(v as boolean)} />
+            <span className="text-sm">Парковка</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={hasElevator} onCheckedChange={(v) => setHasElevator(v as boolean)} />
+            <span className="text-sm">Лифт</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bg-[#F5F6F8] min-h-screen">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b">
+        <div className="max-w-[1200px] mx-auto px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-primary">Главная</Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">{city}</span>
+            {type !== 'all' && <><span>/</span><span>{type === 'sale' ? 'Продажа' : 'Аренда'}</span></>}
+          </div>
+          <h1 className="text-xl font-bold mt-1">
+            Недвижимость в {city}
+            {type === 'sale' ? ' — Продажа' : type === 'rent' ? ' — Аренда' : ''}
+          </h1>
+          <p className="text-sm text-muted-foreground">Найдено: <b className="text-foreground">{totalCount}</b> объявлений</p>
+        </div>
+      </div>
+
+      <div className="max-w-[1200px] mx-auto px-4 py-5">
+        {/* Chips row */}
+        <div className="bg-white border border-border rounded-xl px-4 py-2.5 mb-4 flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold text-muted-foreground">Комнат:</span>
+          {ROOM_OPTIONS.map((r) => (
+            <button key={r} onClick={() => setRooms(r)}
+              className={`px-3 py-1 rounded-full border text-xs transition ${rooms === r ? 'bg-primary border-primary text-white font-semibold' : 'border-border hover:border-primary hover:text-primary'}`}>
+              {r === 'all' ? 'Все' : r}
+            </button>
+          ))}
+          <span className="ml-auto text-xs text-muted-foreground">
+            Найдено: <b className="text-foreground">{totalCount}</b>
+          </span>
+        </div>
+
+        <div className="flex gap-5">
+          {/* Sidebar фильтры — desktop */}
+          <aside className="hidden lg:block w-[240px] shrink-0">
+            <div className="bg-white border border-border rounded-xl p-4 sticky top-[120px]">
               <FiltersContent />
-            </Card>
+            </div>
           </aside>
 
-          <main className="flex-1">
-            <div className="lg:hidden mb-4">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <SlidersHorizontal className="h-4 w-4 mr-2" />
-                    Фильтры
-                    {(type !== 'all' || minPrice || maxPrice || rooms !== 'all' || hasParking || hasElevator) && (
-                      <Badge variant="secondary" className="ml-2">
-                        Активны
-                      </Badge>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[350px]">
-                  <FiltersContent />
-                </SheetContent>
-              </Sheet>
-            </div>
+          {/* Mobile фильтры */}
+          <div className="lg:hidden mb-3 w-full">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <SlidersHorizontal className="h-4 w-4 mr-2" /> Фильтры
+                  {(type !== 'all' || propertyType !== 'all' || rooms !== 'all' || minPrice || maxPrice) && (
+                    <span className="ml-2 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">●</span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] overflow-y-auto">
+                <div className="mt-6"><FiltersContent /></div>
+              </SheetContent>
+            </Sheet>
+          </div>
 
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-muted-foreground">
-                Найдено: <span className="font-medium text-foreground">{totalCount}</span> объявлений
-              </p>
-            </div>
-
+          {/* Listings */}
+          <main className="flex-1 min-w-0">
             {loading ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
@@ -276,11 +229,9 @@ export default function CityPage() {
               </div>
             ) : listings.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-xl border border-border">
-                <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
-                  <SlidersHorizontal className="h-8 w-8 text-slate-400" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Объявления не найдены</h3>
-                <p className="text-muted-foreground mb-6">Попробуйте изменить параметры фильтрации</p>
+                <SlidersHorizontal className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <h3 className="font-semibold mb-1">Объявления не найдены</h3>
+                <p className="text-sm text-muted-foreground mb-4">Попробуйте изменить фильтры</p>
                 <Button variant="outline" onClick={resetFilters}>Сбросить фильтры</Button>
               </div>
             ) : (
