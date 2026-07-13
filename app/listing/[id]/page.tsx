@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Check,
   Box,
+  Calculator,
 } from 'lucide-react';
 
 export default function ListingDetailPage() {
@@ -35,6 +36,23 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const [downPct, setDownPct] = useState(20);
+  const [rate, setRate] = useState(7);
+  const [term, setTerm] = useState(20);
+
+  const calcResult = useMemo(() => {
+    if (!listing || listing.type !== 'sale') return null;
+    const price = listing.price;
+    const down = Math.round(price * downPct / 100);
+    const loan = price - down;
+    const r = rate / 100 / 12;
+    const n = term * 12;
+    const monthly = r === 0 ? loan / n : loan * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+    const total = monthly * n;
+    const overpay = total - loan;
+    return { down, loan, monthly: Math.round(monthly), total: Math.round(total), overpay: Math.round(overpay) };
+  }, [listing, downPct, rate, term]);
 
   useEffect(() => {
     fetchListing();
@@ -408,6 +426,77 @@ export default function ListingDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {calcResult && (
+              <Card className="border-0 shadow-md">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Calculator className="h-4 w-4 text-primary" />
+                    </div>
+                    <h3 className="font-bold text-sm">Ипотечный калькулятор</h3>
+                  </div>
+
+                  <div className="text-center bg-primary/5 rounded-lg py-3 mb-4">
+                    <div className="text-2xl font-extrabold text-primary">
+                      {calcResult.monthly.toLocaleString('ru-KZ')} ₸
+                    </div>
+                    <div className="text-xs text-muted-foreground">ежемесячный платёж</div>
+                  </div>
+
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-muted-foreground">Первоначальный взнос</span>
+                        <span className="font-semibold">{downPct}% — {calcResult.down.toLocaleString('ru-KZ')} ₸</span>
+                      </div>
+                      <input type="range" min={10} max={90} step={5} value={downPct}
+                        onChange={(e) => setDownPct(Number(e.target.value))}
+                        className="w-full accent-primary h-1.5 cursor-pointer" />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-muted-foreground">Процентная ставка</span>
+                        <span className="font-semibold">{rate}% годовых</span>
+                      </div>
+                      <input type="range" min={5} max={30} step={0.5} value={rate}
+                        onChange={(e) => setRate(Number(e.target.value))}
+                        className="w-full accent-primary h-1.5 cursor-pointer" />
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-muted-foreground">Срок кредита</span>
+                        <span className="font-semibold">{term} лет</span>
+                      </div>
+                      <input type="range" min={1} max={30} step={1} value={term}
+                        onChange={(e) => setTerm(Number(e.target.value))}
+                        className="w-full accent-primary h-1.5 cursor-pointer" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs border-t pt-3">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Сумма кредита</span>
+                      <span className="font-medium">{calcResult.loan.toLocaleString('ru-KZ')} ₸</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Итого выплат</span>
+                      <span className="font-medium">{calcResult.total.toLocaleString('ru-KZ')} ₸</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Переплата</span>
+                      <span className="font-medium text-red-500">{calcResult.overpay.toLocaleString('ru-KZ')} ₸</span>
+                    </div>
+                  </div>
+
+                  <Link href="/mortgage" className="block mt-3 text-center text-xs text-primary hover:underline">
+                    Программы ипотеки в Казахстане →
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
