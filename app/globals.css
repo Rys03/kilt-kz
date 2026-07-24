@@ -39,3 +39,21 @@
 .hero-gradient {
   background: linear-gradient(135deg, #1A1A2E 0%, #2D1B4E 50%, #E8352A 100%);
 }
+
+@keyframes slow-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 53, 42, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(232, 53, 42, 0); }
+}
+
+.animate-slow-spin {
+  animation: slow-spin 4s linear infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}

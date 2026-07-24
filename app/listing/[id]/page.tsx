@@ -258,10 +258,10 @@ export default function ListingDetailPage() {
                       <p className="text-sm text-muted-foreground">Виртуальный тур по объекту</p>
                     </div>
                   </div>
-                  <a href={listing.model_3d_url} target="_blank" rel="noopener noreferrer">
-                    <Button className="w-full" variant="outline" size="lg">
-                      <Box className="h-4 w-4 mr-2" />
-                      Открыть 3D модель
+                  <a href={listing.model_3d_url} target="_blank" rel="noopener noreferrer" className="block">
+                    <Button className="w-full animate-glow-pulse border-primary text-primary hover:bg-primary hover:text-white transition-colors duration-300" variant="outline" size="lg">
+                      <Box className="h-4 w-4 mr-2 animate-slow-spin" />
+                      Открыть 3D тур
                     </Button>
                   </a>
                 </CardContent>
